@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using CoffeeShop.Models;
+using CoffeeShop.Repositories;
 
 namespace CoffeeShop.Controllers
 {
@@ -12,36 +9,58 @@ namespace CoffeeShop.Controllers
     [ApiController]
     public class CoffeeController : ControllerBase
     {
-        // GET: api/<CoffeeController>
+        private readonly CoffeeRepository _coffeeRepository;
+        public CoffeeController(IConfiguration configuration)
+        {
+            _coffeeRepository = new CoffeeRepository(configuration);
+        }
+
+        // https://localhost:5001/api/coffee/
         [HttpGet]
-        public IEnumerable<string> Get()
+        public IActionResult Get()
         {
-            return new string[] { "value1", "value2" };
+            return Ok(_coffeeRepository.GetAll());
         }
 
-        // GET api/<CoffeeController>/5
+        // https://localhost:5001/api/coffee/5
         [HttpGet("{id}")]
-        public string Get(int id)
+        public IActionResult Get(int id)
         {
-            return "value";
+            var variety = _coffeeRepository.Get(id);
+            if (variety == null)
+            {
+                return NotFound();
+            }
+            return Ok(variety);
         }
 
-        // POST api/<CoffeeController>
+        // https://localhost:5001/api/coffee/
         [HttpPost]
-        public void Post([FromBody] string value)
+        public IActionResult Post(Coffee beanVariety)
         {
+            _coffeeRepository.Add(beanVariety);
+            return CreatedAtAction("Get", new { id = beanVariety.Id }, beanVariety);
         }
 
-        // PUT api/<CoffeeController>/5
+        // https://localhost:5001/api/coffee/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public IActionResult Put(int id, Coffee beanVariety)
         {
+            if (id != beanVariety.Id)
+            {
+                return BadRequest();
+            }
+
+            _coffeeRepository.Update(beanVariety);
+            return NoContent();
         }
 
-        // DELETE api/<CoffeeController>/5
+        // https://localhost:5001/api/coffee/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public IActionResult Delete(int id)
         {
+            _coffeeRepository.Delete(id);
+            return NoContent();
         }
     }
 }
